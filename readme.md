@@ -13,10 +13,14 @@
 * [Mecanim Animation Parameter Types: Boolean vs. Trigger](http://answers.unity3d.com/questions/600268/mecanim-animation-parameter-types-boolean-vs-trigg.html)
 * Parameters can also be controlled animation using Curve and read in script
     * You cannot control an Animation parameter from both Curve and Script, so you have to structure your code correspondingly.
+* See sample scene `01` for reference
 
 
 ### Root motion, Blend Tree
 * [RPG Character Controller 001 - Unity 5 Root Motion](https://www.youtube.com/watch?v=k12w-rEbuXI&index=1&list=PL_eGgISVYZkeD-q83hLtPESTB-lPKnfjH)
+* Remember to turn of gravity when control height with animation ([No gravity with mecanim](http://answers.unity3d.com/questions/468709/no-gravity-with-mecanim.html?page=1&pageSize=5&sort=votes))
+* See sample scene `02` for reference
+
 
 ### Layer, Layer Mask
 * Layer Usages ([Animator Controller Layers](https://unity3d.com/learn/tutorials/topics/animation/animator-controller-layers))
@@ -27,6 +31,7 @@
 * Avatar Mask([Avatar Masks](https://unity3d.com/learn/tutorials/topics/animation/avatar-masks))
     * Could be set in animation to see the effect of Masking only part of the body
     * Normally apply to layer which controls part of the body ([advanced animation](https://community.mixamo.com/hc/en-us/articles/204581427-Unity-Mecanim-Advanced-Animation))
+* See sample scene `03` for reference
 
 ### Equip weapon
 * Equip immediately without animation
@@ -38,12 +43,14 @@
         * Find the correct node in the model OR create a weapon holder node like before
         * Attach the weapons to it
         * Hide/Unhide the correct weapon when switching weapon
-* Equip with equip/unequip animations. All weapons are treated the same when equipped ([Sword equipping](https://www.youtube.com/watch?v=7gsl43thTsk))
+* Equipped weapons only change a part of the body ([Sword equipping](https://www.youtube.com/watch?v=7gsl43thTsk))
+    * Equip with equip/unequip animations. All weapons are treated the same when equipped
     * Create equip/unequip animation for each weapons
-    * Using layer/layer mask to blend the equip/unequip animations, masking only the necessary parts of the body, such as the arm movement
-    * Using Animation Event to set value to flags such as: sword_equipped, sword_unequipped
+    * Using layer/layer mask to blend the equip/unequip animations, masking only the necessary parts of the body, such as the arm movement. The lower body, head and other parts stay the same.
+    * Using Animation Event to set value to flags such as: `sword_equipped`, `sword_unequipped`
     * Attach the corresponding weapon using Animation Event calling functions and/or flags
 * Weapons affect whole animation when equiped ([Applied Mecanim : Character Animation and Combat State Machines](https://www.youtube.com/watch?v=Is9C4i4XyXk))
+    * Equipping a heavy weapon will affect the whole body movement
 
 
 ### Using mechanim as state machine
@@ -58,28 +65,31 @@
         * 4 throwable items
         * 6 classes of magic each with 3-6 abilities
         * Basic locomotion, jump, hit react, death
-    * One way is to use SubStateMachine, with several depth layers
+    * One approach is to use SubStateMachine, with several depth layers. One SubStateMachine for each weapon
     * An alternative organization is to use BaseLayer with Overrides Layer and Additive Layer
 * [Leveraging Unity 5.2's Advanced Animation Features](https://www.youtube.com/watch?v=HOURak6BpSo)
-    * You can manage all transitions between attacks manually
-    * Or you can use a blend tree. This is slightly better. One problem is if you change the Blend parameter while playing animation, it will change the animation immediately.
-    * Solution in Unity 5: StateMachineBehaviour on a State. This way you can have code that run at the Start or End of your blendtree.
-    * You could also have StateMachineBehaviour on a StateMachine. Then you can override `OnStateMachineEnter` and `OnStateMachineExit` functions
-    * When the SubStateMachine is a sequence of animations, you can have code on `OnStateMachineEnter` to equip weapon
-    * Can also check for Input in `StateMachineBehaviour`
+    * StateMachineBehaviour
+        * You can manage all transitions between attacks manually
+        * Or you can use a blend tree. This is slightly better. One problem is if you change the Blend parameter while playing animation, it will change the animation immediately.
+        * Solution in Unity 5: StateMachineBehaviour on a State. This way you can have code that run at the Start or End of your blendtree.
+        * You could also have StateMachineBehaviour on a StateMachine. Then you can override `OnStateMachineEnter` and `OnStateMachineExit` functions
+        * When the SubStateMachine is a sequence of animations, you can have code on `OnStateMachineEnter` to equip weapon
+        * Can also check for Input in `StateMachineBehaviour`
+    * Playables API
+        * provides a way to create tools, effects and other gameplay mechanisms by organizing and evaluating data sources in a tree-like structure
+* See sample scene `04` for reference
 
 
 
 ## Best Practices
 
 * [Animation events not firing](http://answers.unity3d.com/questions/806949/animation-events-not-firing.html) when the event is near the endframe, so either use a third party event dispatcher, or use `StateMachineBehaviour`.
-* When importing animations, make sure to `Bake into pose` the part where you don't want to move by Root motion. Also use `Offset` to fix Average velocity not zero problems, e.g. walking animation that has a X speed
 * Change the animation speed of specific layer
     * There's no way to change the animation speed of specific layer. The current best way is to Use blend tree to control the speed of a particular layer based on parameter. See [Mecanim - Change animation speed of specific animation or layers](http://forum.unity3d.com/threads/mecanim-change-animation-speed-of-specific-animation-or-layers.160395/)
     * You can also change the speed of particular state in Editor and via script
 * Use int parameter instead of boolean or trigger. This way you can use AnyState to transition using condition such as `skill=1`, then when entering the mecanim state we set it to another number immediately [Applied Mecanim : Character Animation and Combat State Machines](https://www.youtube.com/watch?v=Is9C4i4XyXk)
 * Use substate to simplify your state machine. However, becareful when constructing AnyState transition to deeper substate, since AnyState is global. In this way, we can ignore the immediate substate and only care about the final subtate. We use the most specific condition, such as `skill=1 and subskill=2` to trigger the final substate from AnyState. This way we don't have to configure transition to immediate substate and only care about the final state
-* Use SMB: [Applied Mecanim : Character Animation and Combat State Machines](https://www.youtube.com/watch?v=Is9C4i4XyXk)
+* Use SMB to organize your code ([Applied Mecanim : Character Animation and Combat State Machines](https://www.youtube.com/watch?v=Is9C4i4XyXk))
 * [Running an animation completely before transitioning back](http://answers.unity3d.com/questions/685968/running-an-animation-completely-before-transitioni.html)
     * Make sure Exit time is 1.00, with FixedDuration unchecked.
 * How to Run the death animation then destroy GameObject
@@ -90,3 +100,4 @@
     * Using Up node: Transition to state or StateMachine
     * Using Entry/Exit nodes: Transition to/from StateMachine. This facilitates better reusability
     * Try to only use one way
+* When importing animations, make sure to `Bake into pose` the part where you don't want to move by Root motion. Also use `Offset` to fix Average velocity not zero problems, e.g. walking animation that has a X speed
